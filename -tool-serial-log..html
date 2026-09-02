@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Tool Serial Number Log</title>
+<style>
+  :root{
+    --bg:#14171c; --panel:#1b1f26; --panel2:#20262f;
+    --line:#323a46; --line-soft:#262c35;
+    --text:#e9ebee; --muted:#8892a0;
+    --accent:#0014DC; --accent-hover:#000fad;
+    --ok:#4caf7d; --danger:#d9534f;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    border-top:3px solid var(--accent);
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 14px 90px;}
+  header{position:sticky;top:0;background:var(--bg);z-index:5;padding:16px 0 10px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+  h1{font-size:19px;margin:0 0 3px;font-weight:700;letter-spacing:-0.01em;}
+  .sub{color:var(--muted);font-size:12.5px;}
+  .tabs{display:flex;gap:0;margin:14px 0 0;border:1px solid var(--line);}
+  .tab{flex:1;text-align:center;padding:10px 0;background:var(--panel);color:var(--muted);font-size:13.5px;font-weight:600;}
+  .tab + .tab{border-left:1px solid var(--line);}
+  .tab.active{background:var(--accent);color:#fff;}
+  .card{background:var(--panel);border:1px solid var(--line);padding:16px;margin-bottom:12px;}
+  .card h2{font-size:13px;color:var(--text);margin:0 0 12px;font-weight:700;padding-bottom:8px;border-bottom:1px solid var(--line-soft);}
+  .field{margin-bottom:11px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;}
+  .row2{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;}
+  input[type=text], input[type=date], select{
+    width:100%;padding:10px 11px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--text);font-size:15px;
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  select{font-family:-apple-system,sans-serif;}
+  input[type=date]{font-family:-apple-system,sans-serif;}
+  input:focus, select:focus{outline:none;border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+  .scanbtn{
+    display:flex;align-items:center;justify-content:center;width:46px;
+    background:var(--accent);border:1px solid var(--accent);color:#fff;font-size:18px;
+  }
+  .scanbtn:active{background:var(--accent-hover);}
+  .pillgroup{display:flex;border:1px solid var(--line);}
+  .pill{flex:1;padding:10px 0;text-align:center;background:var(--panel2);color:var(--muted);font-size:14px;font-weight:600;}
+  .pill + .pill{border-left:1px solid var(--line);}
+  .pill.on{background:var(--accent);color:#fff;}
+  .kitgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;}
+  .kitgrid .field label{font-size:11.5px;}
+  .primary{width:100%;padding:14px;background:var(--accent);border:1px solid var(--accent);color:#fff;font-size:15px;font-weight:700;margin-top:6px;}
+  .primary:active{background:var(--accent-hover);}
+  .ghost{width:100%;padding:11px;background:transparent;border:1px solid var(--line);color:var(--text);font-size:14px;font-weight:600;margin-top:8px;}
+  .entry{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:9px;}
+  .entry .eh{display:flex;justify-content:space-between;align-items:baseline;}
+  .entry .cu{font-weight:700;font-size:14.5px;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;}
+  .entry .date{color:var(--muted);font-size:12px;}
+  .entry .details{margin-top:6px;font-size:12.5px;color:var(--muted);line-height:1.55;}
+  .entry .del{color:var(--danger);font-size:12px;background:none;border:none;padding:6px 0 0;font-weight:600;}
+  .empty{color:var(--muted);text-align:center;padding:48px 0;font-size:13.5px;border:1px dashed var(--line);}
+  .modal-bg{position:fixed;inset:0;background:rgba(10,12,15,.82);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .modal-bg.show{display:flex;}
+  .modal{background:var(--panel);width:100%;max-width:520px;border-top:3px solid var(--accent);padding:16px;max-height:88vh;overflow:auto;position:relative;}
+  .modal h3{margin:0 0 12px;font-size:15px;font-weight:700;}
+  video{width:100%;background:#000;border:1px solid var(--line);}
+  canvas{display:none;}
+  .capbtn{width:64px;height:64px;border-radius:50%;background:#fff;border:4px solid var(--accent);margin:14px auto;display:block;}
+  .modalclose{position:absolute;top:16px;right:16px;background:var(--panel2);border:1px solid var(--line);color:var(--text);width:32px;height:32px;font-size:16px;}
+  .ocrbox{background:var(--panel2);border:1px solid var(--line);padding:11px;margin-top:10px;font-size:15px;word-break:break-all;min-height:20px;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;}
+  .targetpicker{margin-top:10px;}
+  .targetpicker select{width:100%;}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 18px;font-size:13.5px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;font-weight:600;}
+  .toast.show{opacity:1;}
+  .status{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;min-height:16px;}
+  .search{margin-bottom:10px;}
+  .badge{display:inline-block;background:var(--panel2);border:1px solid var(--line);padding:1px 7px;font-size:11px;color:var(--muted);margin-left:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tool Serial Number Log</h1>
+    <div class="sub" id="headerSub">Shared team log — step 1 (Maximo sync coming later)</div>
+    <div class="tabs">
+      <div class="tab active" data-tab="new">New entry</div>
+      <div class="tab" data-tab="list">Saved (<span id="countBadge">0</span>)</div>
+    </div>
+  </header>
+
+  <div id="view-new">
+    <div class="card">
+      <h2>Job info</h2>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="f_date">
+      </div>
+      <div class="field">
+        <label>Engineer</label>
+        <input type="text" id="f_engineer" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label>Config</label>
+        <input type="text" id="f_config" placeholder="Configuration">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Control unit</h2>
+      <div class="field">
+        <label>CU S.N</label>
+        <div class="row2"><input type="text" id="f_cu" placeholder="Serial number"><button class="scanbtn" data-target="f_cu">&#128247;</button></div>
+      </div>
+      <div class="field">
+        <label>Module S.N</label>
+        <div class="row2"><input type="text" id="f_module" placeholder="Serial number"><button class="scanbtn" data-target="f_module">&#128247;</button></div>
+      </div>
+      <div class="field">
+        <label>Battery S.N</label>
+        <div class="row2"><input type="text" id="f_battery" placeholder="Serial number"><button class="scanbtn" data-target="f_battery">&#128247;</button></div>
+      </div>
+      <div class="field">
+        <label>Battery expiry date</label>
+        <input type="date" id="f_battexp">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Checks</h2>
+      <div class="field">
+        <label>Gamma detector</label>
+        <div class="pillgroup" id="grp_gamma">
+          <div class="pill" data-val="Yes">Yes</div>
+          <div class="pill" data-val="No">No</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Transmitting board</label>
+        <div class="pillgroup" id="grp_tx">
+          <div class="pill" data-val="PSU">PSU</div>
+          <div class="pill" data-val="iLK">iLK</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Diamond bearing</label>
+        <div class="pillgroup" id="grp_diamond">
+          <div class="pill" data-val="Yes">Yes</div>
+          <div class="pill" data-val="No">No</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Upper kit</h2>
+      <div class="field">
+        <label>Antenna</label>
+        <div class="row2"><input type="text" id="f_antenna" placeholder="Serial number"><button class="scanbtn" data-target="f_antenna">&#128247;</button></div>
+      </div>
+      <div class="kitgrid">
+        <div class="field">
+          <label>UTG</label>
+          <div class="row2"><input type="text" id="f_utg" placeholder="S.N"><button class="scanbtn" data-target="f_utg">&#128247;</button></div>
+        </div>
+        <div class="field">
+          <label>LTG</label>
+          <div class="row2"><input type="text" id="f_ltg" placeholder="S.N"><button class="scanbtn" data-target="f_ltg">&#128247;</button></div>
+        </div>
+        <div class="field">
+          <label>UMH</label>
+          <div class="row2"><input type="text" id="f_umh" placeholder="S.N"><button class="scanbtn" data-target="f_umh">&#128247;</button></div>
+        </div>
+        <div class="field">
+          <label>LMH</label>
+          <div class="row2"><input type="text" id="f_lmh" placeholder="S.N"><button class="scanbtn" data-target="f_lmh">&#128247;</button></div>
+        </div>
+        <div class="field">
+          <label>UBP</label>
+          <div class="row2"><input type="text" id="f_ubp" placeholder="S.N"><button class="scanbtn" data-target="f_ubp">&#128247;</button></div>
+        </div>
+        <div class="field">
+          <label>LBP</label>
+          <div class="row2"><input type="text" id="f_lbp" placeholder="S.N"><button class="scanbtn" data-target="f_lbp">&#128247;</button></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="primary" id="saveBtn">Save entry</button>
+    <div class="status" id="saveStatus"></div>
+  </div>
+
+  <div id="view-list" style="display:none;">
+    <div class="search"><input type="text" id="searchBox" placeholder="Search by CU S.N, engineer, date..."></div>
+    <button class="ghost" id="exportBtn">Export all as CSV</button>
+    <div id="entryList" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="scanModal">
+  <div class="modal" style="position:relative;">
+    <button class="modalclose" id="closeScan">&times;</button>
+    <h3>Scan serial number</h3>
+    <video id="cam" autoplay playsinline muted></video>
+    <canvas id="camCanvas"></canvas>
+    <button class="capbtn" id="capBtn"></button>
+    <div class="status" id="camStatus">Point camera at the serial tag, then tap the button.</div>
+    <div class="ocrbox" id="ocrResult" style="display:none;"></div>
+    <div class="targetpicker" id="targetPicker" style="display:none;">
+      <label style="font-size:12.5px;color:var(--muted);display:block;margin-bottom:5px;">Insert into field</label>
+      <select id="targetSelect"></select>
+      <button class="primary" id="insertBtn" style="margin-top:8px;">Insert &amp; close</button>
+      <button class="ghost" id="retryBtn">Retake photo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script>
+(function(){
+  const FIELD_IDS = ["f_date","f_engineer","f_config","f_cu","f_module","f_battery","f_battexp",
+    "f_antenna","f_utg","f_ltg","f_umh","f_lmh","f_ubp","f_lbp"];
+  const FIELD_LABELS = {
+    f_cu:"CU S.N", f_module:"Module S.N", f_battery:"Battery S.N",
+    f_antenna:"Antenna", f_utg:"UTG", f_ltg:"LTG", f_umh:"UMH", f_lmh:"LMH", f_ubp:"UBP", f_lbp:"LBP"
+  };
+  const $ = id => document.getElementById(id);
+
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+
+  // ---- tabs ----
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      const isNew = tab.dataset.tab === 'new';
+      $('view-new').style.display = isNew ? '' : 'none';
+      $('view-list').style.display = isNew ? 'none' : '';
+      if(!isNew) renderList();
+    });
+  });
+
+  // ---- pill toggles ----
+  ['grp_gamma','grp_tx','grp_diamond'].forEach(gid=>{
+    const grp = $(gid);
+    grp.querySelectorAll('.pill').forEach(p=>{
+      p.addEventListener('click', ()=>{
+        grp.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));
+        p.classList.add('on');
+      });
+    });
+  });
+  function pillVal(gid){
+    const on = $(gid).querySelector('.pill.on');
+    return on ? on.dataset.val : '';
+  }
+  function setPill(gid, val){
+    $(gid).querySelectorAll('.pill').forEach(p=>{
+      p.classList.toggle('on', p.dataset.val === val);
+    });
+  }
+
+  // default date = today
+  $('f_date').value = new Date().toISOString().slice(0,10);
+
+  // ---- storage helpers ----
+  async function saveRecord(rec){
+    const id = 'record:' + Date.now() + '-' + Math.random().toString(36).slice(2,7);
+    await window.storage.set(id, JSON.stringify(rec), true);
+    return id;
+  }
+  async function loadAllRecords(){
+    const listRes = await window.storage.list('record:', true);
+    const keys = (listRes && listRes.keys) || [];
+    const out = [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, true);
+        if(r && r.value){
+          const parsed = JSON.parse(r.value);
+          parsed._key = k;
+          out.push(parsed);
+        }
+      }catch(e){}
+    }
+    out.sort((a,b)=> (b.savedAt||0) - (a.savedAt||0));
+    return out;
+  }
+  async function deleteRecord(key){
+    await window.storage.delete(key, true);
+  }
+
+  // ---- save entry ----
+  $('saveBtn').addEventListener('click', async ()=>{
+    const cu = $('f_cu').value.trim();
+    const engineer = $('f_engineer').value.trim();
+    if(!cu || !engineer){
+      $('saveStatus').style.color = 'var(--danger)';
+      $('saveStatus').textContent = 'CU S.N and Engineer are required.';
+      return;
+    }
+    const rec = {
+      savedAt: Date.now(),
+      date: $('f_date').value,
+      engineer,
+      config: $('f_config').value.trim(),
+      cu, module: $('f_module').value.trim(), battery: $('f_battery').value.trim(),
+      battExp: $('f_battexp').value,
+      gamma: pillVal('grp_gamma'), tx: pillVal('grp_tx'), diamond: pillVal('grp_diamond'),
+      antenna: $('f_antenna').value.trim(),
+      utg: $('f_utg').value.trim(), ltg: $('f_ltg').value.trim(),
+      umh: $('f_umh').value.trim(), lmh: $('f_lmh').value.trim(),
+      ubp: $('f_ubp').value.trim(), lbp: $('f_lbp').value.trim()
+    };
+    $('saveStatus').style.color = 'var(--muted)';
+    $('saveStatus').textContent = 'Saving...';
+    try{
+      await saveRecord(rec);
+      $('saveStatus').style.color = 'var(--ok)';
+      $('saveStatus').textContent = 'Saved.';
+      toast('Entry saved');
+      FIELD_IDS.forEach(id=>{ if($(id)) $(id).value=''; });
+      $('f_date').value = new Date().toISOString().slice(0,10);
+      setPill('grp_gamma',''); setPill('grp_tx',''); setPill('grp_diamond','');
+      updateCount();
+    }catch(e){
+      $('saveStatus').style.color = 'var(--danger)';
+      $('saveStatus').textContent = 'Could not save. Try again.';
+    }
+  });
+
+  // ---- list view ----
+  let allRecords = [];
+  async function updateCount(){
+    allRecords = await loadAllRecords();
+    $('countBadge').textContent = allRecords.length;
+  }
+  function fmtDate(d){ return d || '—'; }
+  function renderList(filter){
+    const q = (filter||'').toLowerCase();
+    const container = $('entryList');
+    const items = allRecords.filter(r=>{
+      if(!q) return true;
+      return (r.cu||'').toLowerCase().includes(q) ||
+             (r.engineer||'').toLowerCase().includes(q) ||
+             (r.date||'').includes(q) ||
+             (r.config||'').toLowerCase().includes(q);
+    });
+    if(items.length === 0){
+      container.innerHTML = '<div class="empty">No entries yet.</div>';
+      return;
+    }
+    container.innerHTML = items.map(r=>{
+      const details = [
+        r.module ? 'Module '+r.module : '',
+        r.battery ? 'Batt '+r.battery : '',
+        r.config ? 'Config '+r.config : '',
+        r.gamma ? 'Gamma '+r.gamma : '',
+        r.tx ? 'Tx '+r.tx : '',
+        r.diamond ? 'Diamond '+r.diamond : '',
+        r.antenna ? 'Antenna '+r.antenna : '',
+        r.utg ? 'UTG '+r.utg : '', r.ltg ? 'LTG '+r.ltg : '',
+        r.umh ? 'UMH '+r.umh : '', r.lmh ? 'LMH '+r.lmh : '',
+        r.ubp ? 'UBP '+r.ubp : '', r.lbp ? 'LBP '+r.lbp : ''
+      ].filter(Boolean).join(' · ');
+      return '<div class="entry" data-key="'+r._key+'">'+
+        '<div class="eh"><span class="cu">CU '+(r.cu||'—')+'</span><span class="date">'+fmtDate(r.date)+'</span></div>'+
+        '<div class="details">'+(r.engineer||'')+(details ? ' — '+details : '')+'</div>'+
+        '<button class="del" data-key="'+r._key+'">Delete</button>'+
+        '</div>';
+    }).join('');
+    container.querySelectorAll('.del').forEach(btn=>{
+      btn.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        await deleteRecord(btn.dataset.key);
+        toast('Deleted');
+        await updateCount();
+        renderList($('searchBox').value);
+      });
+    });
+  }
+  $('searchBox').addEventListener('input', ()=> renderList($('searchBox').value));
+
+  // ---- CSV export ----
+  $('exportBtn').addEventListener('click', ()=>{
+    if(allRecords.length === 0){ toast('Nothing to export yet'); return; }
+    const cols = ['date','engineer','config','cu','module','battery','battExp','gamma','tx','diamond','antenna','utg','ltg','umh','lmh','ubp','lbp'];
+    const header = cols.join(',');
+    const rows = allRecords.map(r=> cols.map(c=>{
+      const v = (r[c]||'').toString().replace(/"/g,'""');
+      return /[,"\n]/.test(v) ? '"'+v+'"' : v;
+    }).join(','));
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'tool_serial_log_' + Date.now() + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ---- camera / OCR ----
+  let stream = null;
+  let currentTarget = null;
+  const scanModal = $('scanModal');
+  const video = $('cam');
+  const canvas = $('camCanvas');
+
+  async function openScan(targetId){
+    currentTarget = targetId;
+    $('ocrResult').style.display = 'none';
+    $('targetPicker').style.display = 'none';
+    $('camStatus').textContent = 'Point camera at the serial tag, then tap the button.';
+    $('capBtn').style.display = '';
+    video.style.display = '';
+    scanModal.classList.add('show');
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
+    }catch(e){
+      $('camStatus').textContent = 'Could not access camera. Check browser permissions.';
+    }
+  }
+  function closeScan(){
+    scanModal.classList.remove('show');
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  }
+  $('closeScan').addEventListener('click', closeScan);
+
+  document.querySelectorAll('.scanbtn').forEach(btn=>{
+    btn.addEventListener('click', ()=> openScan(btn.dataset.target));
+  });
+
+  $('capBtn').addEventListener('click', async ()=>{
+    if(!stream) return;
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    video.style.display = 'none';
+    $('capBtn').style.display = 'none';
+    $('camStatus').textContent = 'Reading text...';
+    $('ocrResult').style.display = 'none';
+    try{
+      const { data } = await Tesseract.recognize(canvas, 'eng');
+      let text = (data.text || '').trim();
+      text = text.replace(/\s+/g,' ').trim();
+      $('camStatus').textContent = text ? 'Suggested text (check and edit before inserting):' : 'Could not read text clearly — type it manually below.';
+      $('ocrResult').style.display = '';
+      $('ocrResult').contentEditable = true;
+      $('ocrResult').textContent = text || '';
+      buildTargetPicker();
+      $('targetPicker').style.display = '';
+    }catch(e){
+      $('camStatus').textContent = 'OCR failed — you can still type the value manually.';
+      $('ocrResult').style.display = '';
+      $('ocrResult').contentEditable = true;
+      $('ocrResult').textContent = '';
+      buildTargetPicker();
+      $('targetPicker').style.display = '';
+    }
+  });
+
+  function buildTargetPicker(){
+    const sel = $('targetSelect');
+    sel.innerHTML = '';
+    Object.keys(FIELD_LABELS).forEach(id=>{
+      const opt = document.createElement('option');
+      opt.value = id; opt.textContent = FIELD_LABELS[id];
+      if(id === currentTarget) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  $('insertBtn').addEventListener('click', ()=>{
+    const target = $('targetSelect').value;
+    const val = $('ocrResult').textContent.trim();
+    if(target && $(target)) $(target).value = val;
+    toast('Inserted into ' + (FIELD_LABELS[target]||target));
+    closeScan();
+  });
+
+  $('retryBtn').addEventListener('click', async ()=>{
+    $('ocrResult').style.display = 'none';
+    $('targetPicker').style.display = 'none';
+    video.style.display = '';
+    $('capBtn').style.display = '';
+    $('camStatus').textContent = 'Point camera at the serial tag, then tap the button.';
+  });
+
+  updateCount();
+})();
+</script>
+</body>
+</html>
